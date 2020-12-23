@@ -1,12 +1,12 @@
 theory Chapter3Guisen
 imports "HOL-IMP.BExp"
         "HOL-IMP.ASM"
-        "Short_Theory"
+       
 begin
 
 text{*
 \section*{Chapter 3}
-
+ "Short_Theory"
 \exercise
 To show that @{const asimp_const} really folds all subexpressions of the form
 @{term "Plus (N i) (N j)"}, define a function
