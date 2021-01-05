@@ -1,7 +1,7 @@
 theory Chapter3Guisen
 imports "HOL-IMP.BExp"
         "HOL-IMP.ASM"
-       
+        "Short_Theory"
 begin
 
 text\<open>
@@ -348,7 +348,7 @@ lemma "pbval (dnf_of_nnf b) s = pbval b s"
 
 lemma "is_nnf b \<Longrightarrow> is_dnf (dnf_of_nnf b)"
 (* your definition/proof here *)
-
+  oops
 text\<open>
 \endexercise
 
