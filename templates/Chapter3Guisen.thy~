@@ -12,18 +12,29 @@ To show that @{const asimp_const} really folds all subexpressions of the form
 @{term "Plus (N i) (N j)"}, define a function
 \<close>
 
-fun optimal :: "aexp \<Rightarrow> bool" where
-(* your definition/proof here *)
+fun optimal :: "aexp \<Rightarrow> bool"
+  where "optimal (N n) = True"
+    | "optimal (V x) = True"
+    | "optimal (Plus (N n) (N m)) = False"
+    | "optimal (Plus va vb) = ((optimal va) \<and> (optimal vb))"
 
 text\<open>
 that checks that its argument does not contain a subexpression of the form
 @{term "Plus (N i) (N j)"}. Then prove that the result of @{const asimp_const}
 is optimal:
 \<close>
+value "optimal (asimp_const(Plus (N i) (N j)))"
+
 
 lemma "optimal (asimp_const a)"
 (* your definition/proof here *)
+ 
+   apply(induction a rule:asimp_const.induct)
+    apply (auto split:aexp.split)
 
+   
+oops
+  
 text\<open>
 This proof needs the same @{text "split:"} directive as the correctness proof of
 @{const asimp_const}. This increases the chance of nontermination

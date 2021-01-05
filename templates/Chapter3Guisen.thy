@@ -12,18 +12,28 @@ To show that @{const asimp_const} really folds all subexpressions of the form
 @{term "Plus (N i) (N j)"}, define a function
 \<close>
 
-fun optimal :: "aexp \<Rightarrow> bool" where
-(* your definition/proof here *)
+fun optimal :: "aexp \<Rightarrow> bool"
+  where "optimal (N n) = True"
+    | "optimal (V x) = True"
+    | "optimal (Plus (N n) (N m)) = False"
+    | "optimal (Plus va vb) = ((optimal va) \<and> (optimal vb))"
 
 text\<open>
 that checks that its argument does not contain a subexpression of the form
 @{term "Plus (N i) (N j)"}. Then prove that the result of @{const asimp_const}
 is optimal:
 \<close>
+value "optimal (asimp_const(Plus (N i) (N j)))"
+
 
 lemma "optimal (asimp_const a)"
 (* your definition/proof here *)
+ 
+   apply(induction a rule:asimp_const.induct)
+    apply (auto split:aexp.split)
 
+  done
+  
 text\<open>
 This proof needs the same @{text "split:"} directive as the correctness proof of
 @{const asimp_const}. This increases the chance of nontermination
@@ -47,10 +57,20 @@ constants in an expression by zeroes (they will be optimized away later):
 
 fun sumN :: "aexp \<Rightarrow> int" where
 (* your definition/proof here *)
+  "sumN (N n) = n"
+    | "sumN (V x) = 0"
+    | "sumN (Plus va vb) = sumN(va)+ sumN(vb)"
+
+value "sumN (asimp_const(Plus (N 2) (N 5)))"
 
 fun zeroN :: "aexp \<Rightarrow> aexp" where
 (* your definition/proof here *)
+"zeroN (N n) =N 0"
+    | "zeroN (V x) = V x"
+    | "zeroN (Plus va vb) = Plus (zeroN(va)) (zeroN(vb))"
 
+
+value "zeroN (asimp_const(Plus (V x) (N 5)))"
 text \<open>
 Next, define a function @{text sepN} that produces an arithmetic expression
 that adds the results of @{const sumN} and @{const zeroN}. Prove that
@@ -59,10 +79,20 @@ that adds the results of @{const sumN} and @{const zeroN}. Prove that
 
 definition sepN :: "aexp \<Rightarrow> aexp" where
 (* your definition/proof here *)
+"sepN(a) = Plus(zeroN a)(N(sumN a))"
+
+value "sepN (Plus (N 0)  (Plus (V x) (N 0)))"
 
 lemma aval_sepN: "aval (sepN t) s = aval t s"
 (* your definition/proof here *)
-
+  apply (induction t)
+    apply (auto split:aexp.split)
+  sledgehammer
+    apply (simp add: sepN_def)
+ sledgehammer
+  apply (simp add: sepN_def)
+ sledgehammer
+  using sepN_def by auto
 text \<open>
 Finally, define a function @{text full_asimp} that uses @{const asimp}
 to eliminate the zeroes left over by @{const sepN}.
@@ -71,12 +101,17 @@ Prove that it preserves the value of an arithmetic expression.
 
 definition full_asimp :: "aexp \<Rightarrow> aexp" where
 (* your definition/proof here *)
-
+"full_asimp(a)=plus (N 0) (sepN(a))"
 lemma aval_full_asimp: "aval (full_asimp t) s = aval t s"
 (* your definition/proof here *)
-
-
-
+apply (induction t)
+    apply (auto split:aexp.split)
+ sledgehammer
+  apply (simp add: full_asimp_def sepN_def)
+ sledgehammer
+  apply (simp add: full_asimp_def sepN_def)
+ sledgehammer
+  by (simp add: full_asimp_def sepN_def)
 text\<open>
 \endexercise
 
@@ -88,7 +123,9 @@ by an expression in an expression. Define a substitution function
 
 fun subst :: "vname \<Rightarrow> aexp \<Rightarrow> aexp \<Rightarrow> aexp" where
 (* your definition/proof here *)
-
+  "subst x a (N n) = N n"|
+  "subst x a (V v) = (if v=x then (a) else (V v))"|
+   "subst x a (Plus b1 b2) = (Plus (subst x a b1) (subst x a b2))"
 text\<open>
 such that @{term "subst x a e"} is the result of replacing
 every occurrence of variable @{text x} by @{text a} in @{text e}.
@@ -101,7 +138,9 @@ substitute first and evaluate afterwards or evaluate with an updated state:
 
 lemma subst_lemma: "aval (subst x a e) s = aval e (s(x := aval a s))"
 (* your definition/proof here *)
-
+  apply(induction e rule:subst.induct)
+    apply (auto split:aexp.split)
+  done
 text \<open>
 As a consequence prove that we can substitute equal expressions by equal expressions
 and obtain the same result under evaluation:
@@ -109,7 +148,15 @@ and obtain the same result under evaluation:
 lemma "aval a1 s = aval a2 s
   \<Longrightarrow> aval (subst x a1 e) s = aval (subst x a2 e) s"
 (* your definition/proof here *)
-
+  apply(induction a1 a2 rule:subst.induct)
+    apply (auto split:aexp.split)
+  sledgehammer
+    apply (simp add: subst_lemma)
+  sledgehammer
+   apply (simp add: subst_lemma)
+  sledgehammer
+  by (simp add: subst_lemma)
+  
 text\<open>
 \endexercise
 
