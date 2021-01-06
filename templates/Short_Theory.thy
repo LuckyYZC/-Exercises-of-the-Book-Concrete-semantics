@@ -65,10 +65,36 @@ text_raw\<open>}%endsnip\<close>
 
 value "comp (Plus (Plus (V ''x'') (N 1)) (V ''z''))"
 
-theorem exec_comp: "exec (comp a) s stk = aval a s # stk"
-apply(induction a arbitrary: stk)
-apply (auto)
-done
+fun trans :: "int \<Rightarrow> (stack option) \<Rightarrow> (stack option) " where
+"trans a None  = Some (a # [])"|
+"trans a (Some stk) =  Some (a # stk)" 
 
+lemma st01[simp]:"exec [LOADI x] s stk = Short_Theory.trans x stk"
+  apply(induction stk arbitrary: x)
+   apply simp
+  by simp
+lemma st02[simp]:"exec (Short_Theory.comp (V x)) s stk = Short_Theory.trans (aval (V x) s) stk"
+  apply(induction stk arbitrary: x)
+  apply simp
+  by simp
+
+lemma st03[simp]:"exec [ADD] s (Short_Theory.trans (aval a2 s) (Short_Theory.trans (aval a1 s) stk)) =
+           Short_Theory.trans (aval a1 s + aval a2 s) stk"
+  apply(induction stk arbitrary: a1 a2)
+  sledgehammer
+   apply simp
+  sledgehammer
+  by simp
+  
+
+
+theorem exec_comp: "exec (comp a) s stk =(trans (aval a s)  stk)"
+apply(induction a arbitrary: stk)
+  sledgehammer
+  apply simp
+   sledgehammer
+   using st02 apply auto[1]
+   apply(auto split:option.split)
+   done
 end
 

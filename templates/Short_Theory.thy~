@@ -42,16 +42,18 @@ text_raw\<open>}%endsnip\<close>
 
 value "exec [LOADI 5, LOAD ''y'', ADD] <''x'' := 42, ''y'' := 43> (Some [50])"
 
+
+lemma exec[simp] :"(\<And>a is1 stk.(exec (is1 @ is2) s stk = exec is2 s (exec is1 s stk))) \<Longrightarrow> exec (is1 @ is2) s (exec1 a s stk) = exec is2 s (exec is1 s (exec1 a s stk))"
+ sledgehammer
+  by simp
 lemma exec_append[simp]:
   "exec (is1@is2) s stk = exec is2 s (exec is1 s stk)"
   apply(induction is1 arbitrary: stk)
-   apply (auto)
+   apply (auto split:instr.split)
   sledgehammer
-   apply (metis exec.simps(1) exec.simps(2) option.exhaust_sel)
+   apply (metis exec.simps(1) exec.simps(2) option.collapse)
   sledgehammer
-  oops
-
-
+  by (metis exec.simps(3) exec.simps(4) not_Some_eq)
 subsection "Compilation"
 
 text_raw\<open>\snip{ASMcompdef}{0}{2}{%\<close>
