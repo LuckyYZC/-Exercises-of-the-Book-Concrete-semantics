@@ -304,10 +304,14 @@ lemma aval_rel_aval: "aval_rel k s v \<Longrightarrow> aval k s = v"
  sledgehammer
   by simp
 
-lemma aval_01 [simp]: "aval (Plus k1 k2) s = z + w\<Longrightarrow>aval k1 s = z \<Longrightarrow>aval k1 s=w"
-  apply(induction k1)
- 
+lemma aval_01 [simp]: "aval (Plus k1 k2) s = v \<Longrightarrow>(aval k1 s)=z \<Longrightarrow>(aval k2 s) = v-z"
+ sledgehammer
+  by simp
+lemma aval_02 [simp]: "aval_rel k1 s z \<Longrightarrow>aval_rel k2 s (v-z) \<Longrightarrow> aval_rel (Plus k1 k2) s  v"
+ sledgehammer
+  using ar_step by fastforce
 
+  
 lemma aval_aval_rel: "aval k s = v \<Longrightarrow> aval_rel k s v"
 (* your definition/proof here *)
   apply(induction k)
@@ -315,12 +319,12 @@ lemma aval_aval_rel: "aval k s = v \<Longrightarrow> aval_rel k s v"
    apply (simp add: ar_base0)
  sledgehammer
   using Chapter4Guisen.aval_rel.simps aval.simps(2) apply blast
+  by simp
 
-  sledgehammer
-(*<*)oops(*>*)
 corollary "aval_rel k s v \<longleftrightarrow> aval k s = v"
 (* your definition/proof here *)
-
+ sledgehammer
+  using aval_aval_rel aval_rel_aval by blast
 text\<open>
 \endexercise
 
@@ -333,7 +337,12 @@ Define an inductive predicate
 
 inductive ok :: "nat \<Rightarrow> instr list \<Rightarrow> nat \<Rightarrow> bool" where
 (* your definition/proof here *)
-
+ok_base0:  "ok 0 [] 0" |
+ok_base1:  "ok n sk m \<Longrightarrow>ok (Suc n) (sk) (Suc m)"|
+ok_base2:  "ok (Suc (Suc 0)) [ADD] (Suc 0)"|
+ok_step0:  "ok (Suc n) sk m \<Longrightarrow>ok n ((LOAD x)#sk) m"|
+ok_step1:  "ok (Suc n) sk m \<Longrightarrow>ok n ((LOADI v)#sk) m"|
+ok_step2:  "ok n sk (Suc m) \<Longrightarrow>ok (Suc (Suc n)) ((ADD)#sk) m"
 text\<open>
 such that @{text "ok n is n'"} means that with any initial stack of length
 @{text n} the instructions @{text "is"} can be executed
@@ -342,15 +351,22 @@ without stack underflow and that the final stack has length @{text n'}.
 Using the introduction rules for @{const ok},
 prove the following special cases: \<close>
 
-lemma "ok 0 [LOAD x] (Suc 0)"
+lemma ok_0[simp]:"ok 0 [LOAD x] (Suc 0)"
 (* your definition/proof here *)
+  
+  using ok_base0 ok_base1 ok_step0 by auto
+
+lemma ok_1[simp]:"ok  (Suc (Suc 0)) [] (Suc(Suc 0))"
+  sledgehammer
+  by (simp add: ok_base0 ok_base1)
 
 lemma "ok 0 [LOAD x, LOADI v, ADD] (Suc 0)"
 (* your definition/proof here *)
 
+  by (simp add: ok_base2 ok_step0 ok_step1)
 lemma "ok (Suc (Suc 0)) [LOAD x, ADD, ADD, LOAD y] (Suc (Suc 0))"
 (* your definition/proof here *)
-
+  sledgehammer
 text \<open> Prove that @{text ok} correctly computes the final stack size: \<close>
 
 lemma "\<lbrakk>ok n is n'; length stk = n\<rbrakk> \<Longrightarrow> length (exec is s stk) = n'"
