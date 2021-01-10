@@ -327,7 +327,9 @@ Define an inductive predicate
 
 inductive ok :: "nat \<Rightarrow> instr list \<Rightarrow> nat \<Rightarrow> bool" where
 (* your definition/proof here *)
-ok_base0:  "ok n [] n" |
+
+ok_base0:  "ok 0 [] 0" |
+ok_base01:  "ok n [] n \<Longrightarrow> ok (Suc n) [] (Suc n)"|
 ok_step00:  "ok (Suc n) sk m \<Longrightarrow>ok n ((LOAD x)#sk) m"|
 ok_step01:  "ok n sk m \<Longrightarrow>ok n ((LOAD x)#sk) (Suc m)"|
 ok_step10:  "ok (Suc n) sk m \<Longrightarrow>ok n ((LOADI v)#sk) m"|
@@ -347,7 +349,8 @@ lemma ok_0[simp]:"ok 0 [LOAD x] (Suc 0)"
   by (simp add: ok_base0 ok_step01)
 
 lemma ok_1[simp]:"ok (Suc 0) [LOAD y] (Suc (Suc 0))"
-  by (simp add: ok_base0 ok_step01)
+
+    by (simp add: ok_base0 ok_base01 ok_step01)
 lemma ok_2[simp]:"ok (Suc(Suc 0)) [ADD,LOAD y] (Suc (Suc 0))"
   by (simp add: ok_step2)
 lemma ok_3[simp]:"ok (Suc(Suc(Suc 0))) [ADD,ADD,LOAD y] (Suc (Suc 0))"
@@ -359,9 +362,19 @@ lemma "ok (Suc (Suc 0)) [LOAD x, ADD, ADD, LOAD y] (Suc (Suc 0))"
   by (simp add: ok_step00)
 text \<open> Prove that @{text ok} correctly computes the final stack size: \<close>
 
-lemma "\<lbrakk>ok n is n'; length stk = n\<rbrakk> \<Longrightarrow> length (exec is s stk) = n'"
-(* your definition/proof here *)
+lemma ok_4:"ok n [] n'\<Longrightarrow>(n=n')"
+    using ok.cases by fastforce
+lemma ok_5:" \<lbrakk>\<And>stk. \<lbrakk>ok n ts n'; length stk = n\<rbrakk> \<Longrightarrow> length (exec ts s stk) = n'; ok n (z # ts) n';
+        length stk = n\<rbrakk>
+       \<Longrightarrow> length (exec (z # ts) s stk) = n'"
+  apply(induction stk arbitrary:ts z n')
   
+  oops
+lemma "\<lbrakk>ok n ts n'; length stk = n\<rbrakk> \<Longrightarrow> length (exec ts s stk) = n'"
+(* your definition/proof here *)
+  apply(induction ts arbitrary:stk)
+   apply (simp add: ok_4)
+
 text \<open>
 Lemma @{thm [source] length_Suc_conv} may come in handy.
 
